@@ -23,6 +23,10 @@
 // Critères de fin de partie
 typedef enum {NON, MATCHNUL, ORDI_GAGNE, HUMAIN_GAGNE } FinDePartie;
 
+#define HAUTEUR_PLATEAU 6
+#define LARGEUR_PLATEAU 7
+#define VALP 4
+
 // Definition du type Etat (état/position du jeu)
 typedef struct EtatSt {
 
@@ -31,7 +35,7 @@ typedef struct EtatSt {
 	// TODO: à compléter par la définition de l'état du jeu
 
 	/* par exemple, pour morpion: */
-	char plateau[3][3];	
+	char plateau[HAUTEUR_PLATEAU][LARGEUR_PLATEAU];	
 
 } Etat;
 
@@ -56,8 +60,8 @@ Etat * copieEtat( Etat * src ) {
 	
 	/* par exemple : */
 	int i,j;	
-	for (i=0; i< 3; i++)
-		for ( j=0; j<3; j++)
+	for (i=0; i< HAUTEUR_PLATEAU; i++)
+		for ( j=0; j<LARGEUR_PLATEAU; j++)
 			etat->plateau[i][j] = src->plateau[i][j];
 	
 
@@ -73,8 +77,8 @@ Etat * etat_initial( void ) {
 	
 	/* par exemple : */
 	int i,j;	
-	for (i=0; i< 3; i++)
-		for ( j=0; j<3; j++)
+	for (i=0; i< HAUTEUR_PLATEAU; i++)
+		for ( j=0; j<LARGEUR_PLATEAU; j++)
 			etat->plateau[i][j] = ' ';
 	
 	return etat;
@@ -88,15 +92,15 @@ void afficheJeu(Etat * etat) {
 	/* par exemple : */
 	int i,j;
 	printf("   |");
-	for ( j = 0; j < 3; j++) 
+	for ( j = 0; j < LARGEUR_PLATEAU; j++) 
 		printf(" %d |", j);
 	printf("\n");
 	printf("----------------");
 	printf("\n");
 	
-	for(i=0; i < 3; i++) {
+	for(i=0; i < HAUTEUR_PLATEAU; i++) {
 		printf(" %d |", i);
-		for ( j = 0; j < 3; j++) 
+		for ( j = 0; j < LARGEUR_PLATEAU; j++) 
 			printf(" %c |", etat->plateau[i][j]);
 		printf("\n");
 		printf("----------------");
@@ -165,8 +169,8 @@ Coup ** coups_possibles( Etat * etat ) {
 	
 	/* par exemple */
 	int i,j;
-	for(i=0; i < 3; i++) {
-		for (j=0; j < 3; j++) {
+	for(i=0; i < HAUTEUR_PLATEAU; i++) {
+		for (j=0; j < LARGEUR_PLATEAU; j++) {
 			if ( etat->plateau[i][j] == ' ' ) {
 				coups[k] = nouveauCoup(i,j); 
 				k++;
@@ -261,8 +265,8 @@ FinDePartie testFin( Etat * etat ) {
 	
 	// tester si un joueur a gagné
 	int i,j,k,n = 0;
-	for ( i=0;i < 3; i++) {
-		for(j=0; j < 3; j++) {
+	for ( i=0;i < HAUTEUR_PLATEAU; i++) {
+		for(j=0; j < LARGEUR_PLATEAU; j++) {
 			if ( etat->plateau[i][j] != ' ') {
 				n++;	// nb coups joués
 			
