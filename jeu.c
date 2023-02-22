@@ -11,7 +11,7 @@
 #include <time.h>
 
 // Paramètres du jeu
-#define LARGEUR_MAX 6 		// nb max de fils pour un noeud (= nb max de coups possibles)
+#define LARGEUR_MAX 42 		// nb max de fils pour un noeud (= nb max de coups possibles)
 
 #define TEMPS 3		// temps de calcul pour un coup avec MCTS (en secondes)
 
@@ -23,11 +23,15 @@
 // Critères de fin de partie
 typedef enum {NON, MATCHNUL, ORDI_GAGNE, HUMAIN_GAGNE } FinDePartie;
 
+#define HAUTEUR_PLATEAU 6
+#define LARGEUR_PLATEAU 7
+#define VALP 4
+
 // Definition du type Etat (état/position du jeu)
 typedef struct EtatSt {
 
 	int joueur; // à qui de jouer ? 
-	char plateau[6][7];	
+	char plateau[HAUTEUR_PLATEAU][LARGEUR_PLATEAU];	
 
 } Etat;
 
@@ -48,8 +52,8 @@ Etat * copieEtat( Etat * src ) {
 	
 	/* par exemple : */
 	int i,j;	
-	for (i=0; i< 6; i++)
-		for ( j=0; j<7; j++)
+	for (i=0; i< HAUTEUR_PLATEAU; i++)
+		for ( j=0; j<LARGEUR_PLATEAU; j++)
 			etat->plateau[i][j] = src->plateau[i][j];
 	
 	return etat;
@@ -63,8 +67,8 @@ Etat * etat_initial( void ) {
 	
 	/* par exemple : */
 	int i,j;	
-	for (i=0; i<6; i++)
-		for ( j=0; j<7; j++)
+	for (i=0; i< HAUTEUR_PLATEAU; i++)
+		for ( j=0; j<LARGEUR_PLATEAU; j++)
 			etat->plateau[i][j] = ' ';
 	
 	return etat;
@@ -75,15 +79,15 @@ void afficheJeu(Etat * etat) {
 	//Affichage d'un puissance 4
 	int i,j;
 	printf("   |");
-	for ( j = 0; j < 7; j++) 
+	for ( j = 0; j < LARGEUR_PLATEAU; j++) 
 		printf(" %d |", j);
 	printf("\n");
 	printf("--------------------------------");
 	printf("\n");
 	
-	for(i=0; i < 6; i++) {
+	for(i=0; i < HAUTEUR_PLATEAU; i++) {
 		printf(" %d |", i);
-		for ( j = 0; j < 7; j++) 
+		for ( j = 0; j < LARGEUR_PLATEAU; j++) 
 			printf(" %c |", etat->plateau[i][j]);
 		printf("\n");
 		printf("--------------------------------");
@@ -117,7 +121,7 @@ int jouerCoup( Etat * etat, Coup * coup ) {
 		return 0;
 	}
 	else {
-		for(int i=5; i>-1; i--) {
+		for(int i=5; i>=0; i--) {
 			if(etat->plateau[i][coup->colonne] == ' ') {
 				etat->plateau[i][coup->colonne] = etat->joueur ? 'R' : 'J';
 				break;
@@ -140,8 +144,8 @@ Coup ** coups_possibles( Etat * etat ) {
 	int k = 0;
 	
 	int i,j;
-	for(i=0; i < 6; i++) {
-		for (j=0; j < 7; j++) {
+	for(i=0; i < HAUTEUR_PLATEAU; i++) {
+		for (j=0; j < LARGEUR_PLATEAU; j++) {
 			if ( etat->plateau[i][j] == ' ' ) {
 				coups[k] = nouveauCoup(j); 
 				k++;
@@ -233,36 +237,36 @@ FinDePartie testFin( Etat * etat ) {
 	
 	// tester si un joueur a gagné
 	int i,j,k,n = 0;
-	for ( i=0;i < 3; i++) {
-		for(j=0; j < 3; j++) {
+	for ( i=0;i < HAUTEUR_PLATEAU; i++) {
+		for(j=0; j < LARGEUR_PLATEAU; j++) {
 			if ( etat->plateau[i][j] != ' ') {
 				n++;	// nb coups joués
 			
 				// lignes
 				k=0;
-				while ( k < 3 && i+k < 3 && etat->plateau[i+k][j] == etat->plateau[i][j] ) 
+				while ( k < VALP && i+k < VALP && etat->plateau[i+k][j] == etat->plateau[i][j] ) 
 					k++;
-				if ( k == 3 ) 
+				if ( k == VALP ) 
 					return etat->plateau[i][j] == 'O'? ORDI_GAGNE : HUMAIN_GAGNE;
 
 				// colonnes
 				k=0;
-				while ( k < 3 && j+k < 3 && etat->plateau[i][j+k] == etat->plateau[i][j] ) 
+				while ( k < VALP && j+k < VALP && etat->plateau[i][j+k] == etat->plateau[i][j] ) 
 					k++;
-				if ( k == 3 ) 
+				if ( k == VALP ) 
 					return etat->plateau[i][j] == 'O'? ORDI_GAGNE : HUMAIN_GAGNE;
 
 				// diagonales
 				k=0;
-				while ( k < 3 && i+k < 3 && j+k < 3 && etat->plateau[i+k][j+k] == etat->plateau[i][j] ) 
+				while ( k < VALP && i+k < VALP && j+k < VALP && etat->plateau[i+k][j+k] == etat->plateau[i][j] ) 
 					k++;
-				if ( k == 3 ) 
+				if ( k == VALP ) 
 					return etat->plateau[i][j] == 'O'? ORDI_GAGNE : HUMAIN_GAGNE;
 
 				k=0;
-				while ( k < 3 && i+k < 3 && j-k >= 0 && etat->plateau[i+k][j-k] == etat->plateau[i][j] ) 
+				while ( k < VALP && i+k < VALP && j-k >= 0 && etat->plateau[i+k][j-k] == etat->plateau[i][j] ) 
 					k++;
-				if ( k == 3 ) 
+				if ( k == VALP ) 
 					return etat->plateau[i][j] == 'O'? ORDI_GAGNE : HUMAIN_GAGNE;		
 			}
 		}
@@ -364,7 +368,8 @@ int main(void) {
 			etat->joueur = AUTRE_JOUEUR(etat->joueur);
 		}
 		
-		fin = testFin( etat );
+		//fin = testFin( etat );
+		fin = NON;
 	}	while ( fin == NON ) ;
 
 	printf("\n");
