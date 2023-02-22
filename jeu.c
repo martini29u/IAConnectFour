@@ -11,9 +11,9 @@
 #include <time.h>
 
 // Paramètres du jeu
-#define LARGEUR_MAX 9 		// nb max de fils pour un noeud (= nb max de coups possibles)
+#define LARGEUR_MAX 6 		// nb max de fils pour un noeud (= nb max de coups possibles)
 
-#define TEMPS 5		// temps de calcul pour un coup avec MCTS (en secondes)
+#define TEMPS 3		// temps de calcul pour un coup avec MCTS (en secondes)
 
 // macros
 #define AUTRE_JOUEUR(i) (1-(i))
@@ -27,22 +27,14 @@ typedef enum {NON, MATCHNUL, ORDI_GAGNE, HUMAIN_GAGNE } FinDePartie;
 typedef struct EtatSt {
 
 	int joueur; // à qui de jouer ? 
-
-	// TODO: à compléter par la définition de l'état du jeu
-
-	/* par exemple, pour morpion: */
-	char plateau[3][3];	
+	char plateau[6][7];	
 
 } Etat;
 
 // Definition du type Coup
 typedef struct {
-	// TODO: à compléter par la définition d'un coup 
-
-	/* par exemple, pour morpion: */
 	int ligne;
 	int colonne;
-
 } Coup;
 
 // Copier un état 
@@ -56,11 +48,9 @@ Etat * copieEtat( Etat * src ) {
 	
 	/* par exemple : */
 	int i,j;	
-	for (i=0; i< 3; i++)
-		for ( j=0; j<3; j++)
+	for (i=0; i< 6; i++)
+		for ( j=0; j<7; j++)
 			etat->plateau[i][j] = src->plateau[i][j];
-	
-
 	
 	return etat;
 }
@@ -73,8 +63,8 @@ Etat * etat_initial( void ) {
 	
 	/* par exemple : */
 	int i,j;	
-	for (i=0; i< 3; i++)
-		for ( j=0; j<3; j++)
+	for (i=0; i<6; i++)
+		for ( j=0; j<7; j++)
 			etat->plateau[i][j] = ' ';
 	
 	return etat;
@@ -82,24 +72,21 @@ Etat * etat_initial( void ) {
 
 
 void afficheJeu(Etat * etat) {
-
-	// TODO: à compléter
-
-	/* par exemple : */
+	//Affichage d'un puissance 4
 	int i,j;
 	printf("   |");
-	for ( j = 0; j < 3; j++) 
+	for ( j = 0; j < 7; j++) 
 		printf(" %d |", j);
 	printf("\n");
-	printf("----------------");
+	printf("--------------------------------");
 	printf("\n");
 	
-	for(i=0; i < 3; i++) {
+	for(i=0; i < 6; i++) {
 		printf(" %d |", i);
-		for ( j = 0; j < 3; j++) 
+		for ( j = 0; j < 7; j++) 
 			printf(" %c |", etat->plateau[i][j]);
 		printf("\n");
-		printf("----------------");
+		printf("--------------------------------");
 		printf("\n");
 	}
 }
@@ -107,13 +94,8 @@ void afficheJeu(Etat * etat) {
 
 // Nouveau coup 
 // TODO: adapter la liste de paramètres au jeu
-Coup * nouveauCoup( int i, int j ) {
+Coup * nouveauCoup(int j) {
 	Coup * coup = (Coup *)malloc(sizeof(Coup));
-	
-	// TODO: à compléter avec la création d'un nouveau coup
-	
-	/* par exemple : */
-	coup->ligne = i;
 	coup->colonne = j;
 	
 	return coup;
@@ -121,30 +103,26 @@ Coup * nouveauCoup( int i, int j ) {
 
 // Demander à l'humain quel coup jouer 
 Coup * demanderCoup () {
-
-	// TODO...
-
-	/* par exemple : */
-	int i,j;
-	printf("\n quelle ligne ? ") ;
-	scanf("%d",&i); 
-	printf(" quelle colonne ? ") ;
+	int j;
+	printf("\n quelle colonne ? ");
 	scanf("%d",&j); 
 	
-	return nouveauCoup(i,j);
+	return nouveauCoup(j);
 }
 
 // Modifier l'état en jouant un coup 
 // retourne 0 si le coup n'est pas possible
 int jouerCoup( Etat * etat, Coup * coup ) {
-
-	// TODO: à compléter
-	
-	/* par exemple : */
-	if ( etat->plateau[coup->ligne][coup->colonne] != ' ' )
+	if ( etat->plateau[0][coup->colonne] != ' ' ) {
 		return 0;
+	}
 	else {
-		etat->plateau[coup->ligne][coup->colonne] = etat->joueur ? 'O' : 'X';
+		for(int i=5; i>-1; i--) {
+			if(etat->plateau[i][coup->colonne] == ' ') {
+				etat->plateau[i][coup->colonne] = etat->joueur ? 'R' : 'J';
+				break;
+			}
+		}
 		
 		// à l'autre joueur de jouer
 		etat->joueur = AUTRE_JOUEUR(etat->joueur); 	
@@ -161,21 +139,15 @@ Coup ** coups_possibles( Etat * etat ) {
 	
 	int k = 0;
 	
-	// TODO: à compléter
-	
-	/* par exemple */
 	int i,j;
-	for(i=0; i < 3; i++) {
-		for (j=0; j < 3; j++) {
+	for(i=0; i < 6; i++) {
+		for (j=0; j < 7; j++) {
 			if ( etat->plateau[i][j] == ' ' ) {
-				coups[k] = nouveauCoup(i,j); 
+				coups[k] = nouveauCoup(j); 
 				k++;
 			}
 		}
 	}
-	/* fin de l'exemple */
-	
-	coups[k] = NULL;
 
 	return coups;
 }
@@ -363,7 +335,6 @@ void ordijoue_mcts(Etat * etat, int tempsmax) {
 }
 
 int main(void) {
-
 	Coup * coup;
 	FinDePartie fin;
 	
@@ -389,9 +360,8 @@ int main(void) {
 		}
 		else {
 			// tour de l'Ordinateur
-			
-			ordijoue_mcts( etat, TEMPS );
-			
+			//ordijoue_mcts( etat, TEMPS );	
+			etat->joueur = AUTRE_JOUEUR(etat->joueur);
 		}
 		
 		fin = testFin( etat );
