@@ -255,13 +255,13 @@ FinDePartie testFin( Etat * etat ) {
 
 				/* diagonales*/
 				k=0;
-				while ( k < VALP && j+k < VALP && etat->plateau[i+k][j+k] == etat->plateau[i][j] ) 
+				while ( k < VALP && /*i+k < VALP && j+k < VALP &&*/ etat->plateau[i+k][j+k] == etat->plateau[i][j] ) 
 					k++;
 				if ( k == VALP ) 
 					return etat->plateau[i][j] == 'R'? ORDI_GAGNE : HUMAIN_GAGNE;
 
 				k=0;
-				while ( k < VALP && j-k >= 0 && etat->plateau[i+k][j-k] == etat->plateau[i][j] ) 
+				while ( k < VALP && /*i+k < VALP && j-k >= 0 &&*/ etat->plateau[i+k][j-k] == etat->plateau[i][j] ) 
 					k++;
 				if ( k == VALP ) 
 					return etat->plateau[i][j] == 'R'? ORDI_GAGNE : HUMAIN_GAGNE;
