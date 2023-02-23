@@ -253,18 +253,18 @@ FinDePartie testFin( Etat * etat ) {
 				if ( k == VALP ) 
 					return etat->plateau[i][j] == 'R'? ORDI_GAGNE : HUMAIN_GAGNE;
 
-				/* diagonales
+				/* diagonales*/
 				k=0;
-				while ( k < VALP && i+k < VALP && j+k < VALP && etat->plateau[i+k][j+k] == etat->plateau[i][j] ) 
+				while ( k < VALP && j+k < VALP && etat->plateau[i+k][j+k] == etat->plateau[i][j] ) 
 					k++;
 				if ( k == VALP ) 
-					return etat->plateau[i][j] == 'O'? ORDI_GAGNE : HUMAIN_GAGNE;
+					return etat->plateau[i][j] == 'R'? ORDI_GAGNE : HUMAIN_GAGNE;
 
 				k=0;
-				while ( k < VALP && i+k < VALP && j-k >= 0 && etat->plateau[i+k][j-k] == etat->plateau[i][j] ) 
+				while ( k < VALP && j-k >= 0 && etat->plateau[i+k][j-k] == etat->plateau[i][j] ) 
 					k++;
 				if ( k == VALP ) 
-					return etat->plateau[i][j] == 'O'? ORDI_GAGNE : HUMAIN_GAGNE;*/	
+					return etat->plateau[i][j] == 'R'? ORDI_GAGNE : HUMAIN_GAGNE;
 			}
 		}
 	}
@@ -307,13 +307,10 @@ void ordijoue_mcts(Etat * etat, int tempsmax) {
 	/*  TODO :
 		- supprimer la sélection aléatoire du meilleur coup ci-dessus
 		- implémenter l'algorithme MCTS-UCT pour déterminer le meilleur coup ci-dessous
-
+	*/
 	int iter = 0;
 	
 	do {
-	
-	
-	
 		// à compléter par l'algorithme MCTS-UCT... 
 	
 	
