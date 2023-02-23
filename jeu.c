@@ -11,7 +11,7 @@
 #include <time.h>
 
 // Paramètres du jeu
-#define LARGEUR_MAX 42 		// nb max de fils pour un noeud (= nb max de coups possibles)
+#define LARGEUR_MAX 7 		// nb max de fils pour un noeud (= nb max de coups possibles)
 
 #define TEMPS 3		// temps de calcul pour un coup avec MCTS (en secondes)
 
@@ -47,10 +47,6 @@ Etat * copieEtat( Etat * src ) {
 
 	etat->joueur = src->joueur;
 	
-		
-	// TODO: à compléter avec la copie de l'état src dans etat
-	
-	/* par exemple : */
 	int i,j;	
 	for (i=0; i< HAUTEUR_PLATEAU; i++)
 		for ( j=0; j<LARGEUR_PLATEAU; j++)
@@ -144,15 +140,16 @@ Coup ** coups_possibles( Etat * etat ) {
 	int k = 0;
 	
 	int i,j;
-	for(i=0; i < HAUTEUR_PLATEAU; i++) {
-		for (j=0; j < LARGEUR_PLATEAU; j++) {
-			if ( etat->plateau[i][j] == ' ' ) {
+	for(j=0; j<LARGEUR_PLATEAU; j++) {
+		for (i=0; i<HAUTEUR_PLATEAU; i++) {
+			if (etat->plateau[i][j] == ' ') {
 				coups[k] = nouveauCoup(j); 
 				k++;
+				break;
 			}
 		}
 	}
-
+	coups[k] = NULL;
 	return coups;
 }
 
@@ -242,21 +239,21 @@ FinDePartie testFin( Etat * etat ) {
 			if ( etat->plateau[i][j] != ' ') {
 				n++;	// nb coups joués
 			
-				// lignes
+				//colonnes
 				k=0;
-				while ( k < VALP && i+k < VALP && etat->plateau[i+k][j] == etat->plateau[i][j] ) 
+				while ( k < VALP && etat->plateau[i+k][j] == etat->plateau[i][j] ) 
 					k++;
 				if ( k == VALP ) 
-					return etat->plateau[i][j] == 'O'? ORDI_GAGNE : HUMAIN_GAGNE;
+					return etat->plateau[i][j] == 'R'? ORDI_GAGNE : HUMAIN_GAGNE;
 
-				// colonnes
+				//lignes
 				k=0;
-				while ( k < VALP && j+k < VALP && etat->plateau[i][j+k] == etat->plateau[i][j] ) 
+				while ( k < VALP && etat->plateau[i][j+k] == etat->plateau[i][j] ) 
 					k++;
 				if ( k == VALP ) 
-					return etat->plateau[i][j] == 'O'? ORDI_GAGNE : HUMAIN_GAGNE;
+					return etat->plateau[i][j] == 'R'? ORDI_GAGNE : HUMAIN_GAGNE;
 
-				// diagonales
+				/* diagonales
 				k=0;
 				while ( k < VALP && i+k < VALP && j+k < VALP && etat->plateau[i+k][j+k] == etat->plateau[i][j] ) 
 					k++;
@@ -267,13 +264,13 @@ FinDePartie testFin( Etat * etat ) {
 				while ( k < VALP && i+k < VALP && j-k >= 0 && etat->plateau[i+k][j-k] == etat->plateau[i][j] ) 
 					k++;
 				if ( k == VALP ) 
-					return etat->plateau[i][j] == 'O'? ORDI_GAGNE : HUMAIN_GAGNE;		
+					return etat->plateau[i][j] == 'O'? ORDI_GAGNE : HUMAIN_GAGNE;*/	
 			}
 		}
 	}
 
 	// et sinon tester le match nul	
-	if ( n == 3*3 ) 
+	if ( n == HAUTEUR_PLATEAU*LARGEUR_PLATEAU ) 
 		return MATCHNUL;
 		
 	return NON;
@@ -290,21 +287,20 @@ void ordijoue_mcts(Etat * etat, int tempsmax) {
 	int temps;
 
 	Coup ** coups;
-	Coup * meilleur_coup ;
+	Coup * meilleur_coup;
 	
 	// Créer l'arbre de recherche
 	Noeud * racine = nouveauNoeud(NULL, NULL);	
 	racine->etat = copieEtat(etat); 
 	
 	// créer les premiers noeuds:
-	coups = coups_possibles(racine->etat); 
+	coups = coups_possibles(racine->etat);
 	int k = 0;
 	Noeud * enfant;
 	while ( coups[k] != NULL) {
 		enfant = ajouterEnfant(racine, coups[k]);
 		k++;
 	}
-	
 	
 	meilleur_coup = coups[ rand()%k ]; // choix aléatoire
 	
@@ -364,12 +360,12 @@ int main(void) {
 		}
 		else {
 			// tour de l'Ordinateur
-			//ordijoue_mcts( etat, TEMPS );	
-			etat->joueur = AUTRE_JOUEUR(etat->joueur);
+			ordijoue_mcts( etat, TEMPS );	
+			//etat->joueur = AUTRE_JOUEUR(etat->joueur);
 		}
 		
-		//fin = testFin( etat );
-		fin = NON;
+		fin = testFin( etat );
+		//fin = NON;
 	}	while ( fin == NON ) ;
 
 	printf("\n");
@@ -381,5 +377,6 @@ int main(void) {
 		printf(" Match nul !  \n");
 	else
 		printf( "** BRAVO, l'ordinateur a perdu  **\n");
+	system("pause");
 	return 0;
 }
