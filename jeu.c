@@ -241,27 +241,27 @@ FinDePartie testFin( Etat * etat ) {
 			
 				//colonnes
 				k=0;
-				while ( k < VALP && etat->plateau[i+k][j] == etat->plateau[i][j] ) 
+				while ( k < VALP && i+k < HAUTEUR_PLATEAU && etat->plateau[i+k][j] == etat->plateau[i][j] ) 
 					k++;
 				if ( k == VALP ) 
 					return etat->plateau[i][j] == 'R'? ORDI_GAGNE : HUMAIN_GAGNE;
 
 				//lignes
 				k=0;
-				while ( k < VALP && etat->plateau[i][j+k] == etat->plateau[i][j] ) 
+				while ( k < VALP && j+k < LARGEUR_PLATEAU && etat->plateau[i][j+k] == etat->plateau[i][j] ) 
 					k++;
 				if ( k == VALP ) 
 					return etat->plateau[i][j] == 'R'? ORDI_GAGNE : HUMAIN_GAGNE;
 
 				/* diagonales*/
 				k=0;
-				while ( k < VALP && /*i+k < VALP && j+k < VALP &&*/ etat->plateau[i+k][j+k] == etat->plateau[i][j] ) 
+				while ( k < VALP && i+k < HAUTEUR_PLATEAU && j+k < LARGEUR_PLATEAU && etat->plateau[i+k][j+k] == etat->plateau[i][j] ) 
 					k++;
 				if ( k == VALP ) 
 					return etat->plateau[i][j] == 'R'? ORDI_GAGNE : HUMAIN_GAGNE;
 
 				k=0;
-				while ( k < VALP && /*i+k < VALP && j-k >= 0 &&*/ etat->plateau[i+k][j-k] == etat->plateau[i][j] ) 
+				while ( k < VALP && i+k < HAUTEUR_PLATEAU && j-k >= 0 && etat->plateau[i+k][j-k] == etat->plateau[i][j] ) 
 					k++;
 				if ( k == VALP ) 
 					return etat->plateau[i][j] == 'R'? ORDI_GAGNE : HUMAIN_GAGNE;
