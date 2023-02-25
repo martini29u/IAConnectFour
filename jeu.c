@@ -13,7 +13,7 @@
 // Paramètres du jeu
 #define LARGEUR_MAX 7 		// nb max de fils pour un noeud (= nb max de coups possibles)
 
-#define TEMPS 3		// temps de calcul pour un coup avec MCTS (en secondes)
+#define TEMPS 20		// temps de calcul pour un coup avec MCTS (en secondes)
 
 // macros
 #define AUTRE_JOUEUR(i) (1-(i))
@@ -117,9 +117,10 @@ int jouerCoup( Etat * etat, Coup * coup ) {
 		return 0;
 	}
 	else {
-		for(int i=5; i>=0; i--) {
+		for(int i=HAUTEUR_PLATEAU-1; i>=0; i--) {
 			if(etat->plateau[i][coup->colonne] == ' ') {
 				etat->plateau[i][coup->colonne] = etat->joueur ? 'R' : 'J';
+				coup->ligne = i; 
 				break;
 			}
 		}
@@ -133,7 +134,7 @@ int jouerCoup( Etat * etat, Coup * coup ) {
 
 // Retourne une liste de coups possibles à partir d'un etat 
 // (tableau de pointeurs de coups se terminant par NULL)
-Coup ** coups_possibles( Etat * etat ) {
+Coup ** coups_possibles(Etat * etat ) {
 	
 	Coup ** coups = (Coup **) malloc((1+LARGEUR_MAX) * sizeof(Coup *) );
 	
@@ -194,8 +195,7 @@ Noeud * nouveauNoeud (Noeud * parent, Coup * coup ) {
 	
 	// POUR MCTS:
 	noeud->nb_victoires = 0;
-	noeud->nb_simus = 0;	
-	
+	noeud->nb_simus = 0;
 
 	return noeud; 	
 }
@@ -207,15 +207,6 @@ Noeud * ajouterEnfant(Noeud * parent, Coup * coup) {
 	parent->enfants[parent->nb_enfants] = enfant;
 	parent->nb_enfants++;
 	return enfant;
-}
-
-Noeud * getLastChild(Noeud * racine) {
-	if(racine->enfants != NULL) {
-		return getLastChild(racine->enfants[0]);
-	}
-	else {
-		return racine;
-	}
 }
 
 void freeNoeud ( Noeud * noeud) {
@@ -285,7 +276,60 @@ FinDePartie testFin( Etat * etat ) {
 	return NON;
 }
 
+int getNbVictoires(Noeud * node) {
+	if(node->nb_enfants == 0) {
+		switch(testFin(node->etat)) {
+			case 1:
+				node->nb_victoires = 0;
+				node->nb_simus = 1;
+				break;
+			case 2:
+				node->nb_victoires = 1;
+				node->nb_simus = 1;
+				break;
+			case 3:
+				node->nb_victoires = 0;
+				node->nb_simus = 1;
+				break;
+		}
+		return node->nb_victoires;
+	}
+	else {
+		int sum = 0;
+		for(int i=0; i<node->nb_enfants; i++) {
+			sum += getNbVictoires(node->enfants[i]);
+		}
+		return sum;
+	}
+}
 
+int getNbSimulations(Noeud * node) {
+	if(node->nb_enfants == 0) {
+		node->nb_simus = 1;
+		return node->nb_simus;
+	}
+	else {
+		int sum = 0;
+		for(int i=0; i<node->nb_enfants; i++) {
+			sum += getNbSimulations(node->enfants[i]);
+		}
+		return sum;
+	}
+}
+
+int findBestCoupID(Noeud * node) {
+	int max = -1000;
+	int bestCoupID = 0;
+	for(int i=0; i<node->nb_enfants; i++) {
+		if(testFin(node->enfants[i]->etat) == ORDI_GAGNE) return i;
+		int heuristique = node->enfants[i]->nb_victoires*100 - node->enfants[i]->nb_simus;
+		if(heuristique > max) {
+			max = heuristique;
+			bestCoupID = i;
+		}
+	}
+	return bestCoupID;
+}
 
 // Calcule et joue un coup de l'ordinateur avec MCTS-UCT
 // en tempsmax secondes
@@ -311,23 +355,154 @@ void ordijoue_mcts(Etat * etat, int tempsmax) {
 		k++;
 	}
 	
+
 	meilleur_coup = coups[ rand()%k ]; // choix aléatoire
 	
 	int iter = 0;
-	
+	Etat * etat_possible; 
 	do {
-		/*Sélection 
-		while (testFin(getLastChild(racine->enfants[0])->etat != NON)) { 
-			enfant = ajouterEnfant(getLastChild(racine->enfants[0]), coups[0]);
-		} 
-		printf("%d\n", testFin(getLastChild(racine->enfants[0])->etat));
+		// à compléter par l'algorithme MCTS-UCT... 
+		/*int i = 0;
+		while(i<k){
+			enfant = racine->enfants[i]; 
+			etat_possible = enfant->etat;
+
+			if (ORDI_GAGNE == testFin(etat_possible)){
+				meilleur_coup = enfant->coup; 
+			} else {
+				int l = enfant->coup->ligne; 
+				int c = enfant->coup->colonne; 
+
+				//Vertical
+				int v = 0;
+				//Un jeton associé 
+				if(l+1 < HAUTEUR_PLATEAU && etat_possible->plateau[l+1][c] == etat_possible->plateau[l][c]){
+					v++; 
+					//deux jetons associés 
+					if(l+2<HAUTEUR_PLATEAU && etat_possible->plateau[l+2][c] == etat_possible->plateau[l][c]){
+						v++; 
+					}
+				}
+				
+				//Horizontal
+				int h = 0; 
+
+				//Droite
+				if(c+1<LARGEUR_MAX && etat_possible->plateau[l][c+1] == etat_possible->plateau[l][c]){
+					h++; 
+					if(c+2<LARGEUR_MAX && etat_possible->plateau[l][c+1] == etat_possible->plateau[l][c]){
+						h++;
+					}
+				}
+
+				//Gauche
+				if(c-1>=0 && etat_possible->plateau[l][c-1] == etat_possible->plateau[l][c]){
+					h++; 
+					if(c-2>=0 && etat_possible->plateau[l][c-2] == etat_possible->plateau[l][c]){
+						h++; 
+					}
+				}
+
+				//Diagonale 
+				int d = 0;
+				//Bas-Droite 
+				if(c+1<LARGEUR_PLATEAU && l+1<HAUTEUR_PLATEAU && etat_possible->plateau[l+1][c+1] == etat_possible->plateau[l][c]){
+					d++; 
+					if(c+2<LARGEUR_PLATEAU && l+2<HAUTEUR_PLATEAU && etat_possible->plateau[l+2][c+1] == etat_possible->plateau[l][c]){
+						d++;
+					}
+				}
+				//Bas-Gauche
+				if(c-1>=0 && l+1<HAUTEUR_PLATEAU && etat_possible->plateau[l+1][c-1] == etat_possible->plateau[l][c]){
+					d++; 
+					if(c-2>=0 && l+2<HAUTEUR_PLATEAU && etat_possible->plateau[l+2][c-2] == etat_possible->plateau[l][c]){
+						d++; 
+					}
+				}
+				//Haut-Gauche
+				if(c-1>=0 && l-1>=0 && etat_possible->plateau[l-1][c-1] == etat_possible->plateau[l][c]){
+					d++; 
+					if(c-2>=0 && l-2>0 && etat_possible->plateau[l-2][i-2] == etat_possible->plateau[l][c]){
+						d++; 
+					}
+				}
+				//Haut-Droit
+				if(c+1<LARGEUR_PLATEAU && l-1>=0 && etat_possible->plateau[l-1][c+1] == etat_possible->plateau[l][c]){
+					d++; 
+					if(c+2<LARGEUR_PLATEAU && l-2>=0 && etat_possible->plateau[l-2][c-2] == etat_possible->plateau[l][c]){
+						d++; 
+					}
+				}
+				enfant->nb_simus = h+v+d; 
+			}
+
+			i = i+1;
+		}
+
+		i = 0; 
+		int nbc = rand()%k; 
+		int max = racine->enfants[nbc]->nb_simus;
+		while(i<k){ 
+			enfant = racine->enfants[i]; 
+			if(max<enfant->nb_simus){
+				nbc = i; 
+				max = enfant->nb_simus; 
+			}
+			i=i+1;
+		}
+		meilleur_coup = racine->enfants[nbc]->coup; 
 		*/
-	
-		toc = clock(); 
+
+		//Tous les fils parcourus dans le temps imparti
+		if(iter == racine->nb_enfants) break;
+
+		//Selection + Expansion + Simulation pour chaque fils de la racine à chaque iteration
+		Noeud * tempo = racine->enfants[iter];
+		while(testFin(tempo->etat) == NON) {
+			if(tempo->nb_enfants != 0) tempo = tempo->enfants[0];
+			else {
+				Coup ** coupsTempo = coups_possibles(tempo->etat);
+				int i = 0;
+				while(coupsTempo[i] != NULL) {
+					ajouterEnfant(tempo, coupsTempo[i]);
+					i++;
+				}
+				tempo = tempo->enfants[0];
+			}
+		}
+		//MAJ Feuille
+		switch(testFin(tempo->etat)) {
+			case 1:
+				tempo->nb_victoires = 0;
+				tempo->nb_simus = 1;
+				break;
+			case 2:
+				tempo->nb_victoires = 1;
+				tempo->nb_simus = 1;
+				break;
+			case 3:
+				tempo->nb_victoires = 0;
+				tempo->nb_simus = 1;
+				break;
+		}
+
+		//Rétropropagation
+		while(tempo->parent != racine) {
+			tempo = tempo->parent;
+			tempo->nb_victoires = getNbVictoires(tempo);
+			tempo->nb_simus = getNbSimulations(tempo);
+		}
+		
+		toc = clock();
 		temps = (int)( ((double) (toc - tic)) / CLOCKS_PER_SEC );
 		iter ++;
-	} while ( temps < tempsmax ); 
-	
+
+		//printf("Temps : %d | Victoires : %d | Simulations : %d\n", temps, tempo->nb_victoires, tempo->nb_simus);
+	} while ( temps < tempsmax );
+	//system("PAUSE");
+	// On choisi le meilleur fils avec l'heuristique : nbVictoires * 100 - nbSimulations
+	meilleur_coup = coups[findBestCoupID(racine)];
+
 	// Jouer le meilleur premier coup
 	jouerCoup(etat, meilleur_coup );
 	
