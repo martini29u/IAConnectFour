@@ -117,9 +117,10 @@ int jouerCoup( Etat * etat, Coup * coup ) {
 		return 0;
 	}
 	else {
-		for(int i=5; i>=0; i--) {
+		for(int i=HAUTEUR_PLATEAU-1; i>=0; i--) {
 			if(etat->plateau[i][coup->colonne] == ' ') {
 				etat->plateau[i][coup->colonne] = etat->joueur ? 'R' : 'J';
+				coup->ligne = i; 
 				break;
 			}
 		}
@@ -194,8 +195,7 @@ Noeud * nouveauNoeud (Noeud * parent, Coup * coup ) {
 	
 	// POUR MCTS:
 	noeud->nb_victoires = 0;
-	noeud->nb_simus = 0;	
-	
+	noeud->nb_simus = 0;
 
 	return noeud; 	
 }
@@ -302,6 +302,7 @@ void ordijoue_mcts(Etat * etat, int tempsmax) {
 		k++;
 	}
 	
+
 	meilleur_coup = coups[ rand()%k ]; // choix aléatoire
 	
 	/*  TODO :
@@ -309,13 +310,99 @@ void ordijoue_mcts(Etat * etat, int tempsmax) {
 		- implémenter l'algorithme MCTS-UCT pour déterminer le meilleur coup ci-dessous
 	*/
 	int iter = 0;
-	
+	Etat * etat_possible; 
 	do {
 		// à compléter par l'algorithme MCTS-UCT... 
-	
-	
-	
-	
+		int i = 0;
+		while(i<k){
+			enfant = racine->enfants[i]; 
+			etat_possible = enfant->etat;
+
+			if (ORDI_GAGNE == testFin(etat_possible)){
+				meilleur_coup = enfant->coup; 
+			}else{
+				int l = enfant->coup->ligne; 
+				int c = enfant->coup->colonne; 
+
+				//Vertical
+				int v = 0;
+				//Un jeton associé 
+				if(l+1 < HAUTEUR_PLATEAU && etat_possible->plateau[l+1][c] == etat_possible->plateau[l][c]){
+					v++; 
+					//deux jetons associés 
+					if(l+2<HAUTEUR_PLATEAU && etat_possible->plateau[l+2][c] == etat_possible->plateau[l][c]){
+						v++; 
+					}
+				}
+				
+				//Horizontal
+				int h = 0; 
+
+				//Droite
+				if(c+1<LARGEUR_MAX && etat_possible->plateau[l][c+1] == etat_possible->plateau[l][c]){
+					h++; 
+					if(c+2<LARGEUR_MAX && etat_possible->plateau[l][c+1] == etat_possible->plateau[l][c]){
+						h++;
+					}
+				}
+
+				//Gauche
+				if(c-1>=0 && etat_possible->plateau[l][c-1] == etat_possible->plateau[l][c]){
+					h++; 
+					if(c-2>=0 && etat_possible->plateau[l][c-2] == etat_possible->plateau[l][c]){
+						h++; 
+					}
+				}
+
+				//Diagonale 
+				int d = 0;
+				//Bas-Droite 
+				if(c+1<LARGEUR_PLATEAU && l+1<HAUTEUR_PLATEAU && etat_possible->plateau[l+1][c+1] == etat_possible->plateau[l][c]){
+					d++; 
+					if(c+2<LARGEUR_PLATEAU && l+2<HAUTEUR_PLATEAU && etat_possible->plateau[l+2][c+1] == etat_possible->plateau[l][c]){
+						d++;
+					}
+				}
+				//Bas-Gauche
+				if(c-1>=0 && l+1<HAUTEUR_PLATEAU && etat_possible->plateau[l+1][c-1] == etat_possible->plateau[l][c]){
+					d++; 
+					if(c-2>=0 && l+2<HAUTEUR_PLATEAU && etat_possible->plateau[l+2][c-2] == etat_possible->plateau[l][c]){
+						d++; 
+					}
+				}
+				//Haut-Gauche
+				if(c-1>=0 && l-1>=0 && etat_possible->plateau[l-1][c-1] == etat_possible->plateau[l][c]){
+					d++; 
+					if(c-2>=0 && l-2>0 && etat_possible->plateau[l-2][i-2] == etat_possible->plateau[l][c]){
+						d++; 
+					}
+				}
+				//Haut-Droit
+				if(c+1<LARGEUR_PLATEAU && l-1>=0 && etat_possible->plateau[l-1][c+1] == etat_possible->plateau[l][c]){
+					d++; 
+					if(c+2<LARGEUR_PLATEAU && l-2>=0 && etat_possible->plateau[l-2][c-2] == etat_possible->plateau[l][c]){
+						d++; 
+					}
+				}
+				enfant->nb_simus = h+v+d; 
+			}
+
+			i = i+1;
+		}
+
+		i = 0; 
+		int nbc = rand()%k; 
+		int max = racine->enfants[nbc]->nb_simus;
+		while(i<k){ 
+			enfant = racine->enfants[i]; 
+			if(max<enfant->nb_simus){
+				nbc = i; 
+				max = enfant->nb_simus; 
+			}
+			i=i+1;
+		}
+		meilleur_coup = racine->enfants[nbc]->coup; 
+
 		toc = clock(); 
 		temps = (int)( ((double) (toc - tic)) / CLOCKS_PER_SEC );
 		iter ++;
