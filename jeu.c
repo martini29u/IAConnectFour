@@ -276,6 +276,16 @@ FinDePartie testFin( Etat * etat ) {
 	return NON;
 }
 
+Noeud * createChildren(Noeud * node) {
+	Coup ** coups = coups_possibles(node->etat);
+	int k = 0;
+	while ( coups[k] != NULL) {
+		ajouterEnfant(node, coups[k]);
+		k++;
+	}
+	return node;
+}
+
 int getNbVictoires(Noeud * node) {
 	if(node->nb_enfants == 0) {
 		switch(testFin(node->etat)) {
@@ -339,7 +349,6 @@ void ordijoue_mcts(Etat * etat, int tempsmax) {
 	tic = clock();
 	int temps;
 
-	Coup ** coups;
 	Coup * meilleur_coup;
 	
 	// Créer l'arbre de recherche
@@ -347,16 +356,9 @@ void ordijoue_mcts(Etat * etat, int tempsmax) {
 	racine->etat = copieEtat(etat); 
 	
 	// créer les premiers noeuds:
-	coups = coups_possibles(racine->etat);
-	int k = 0;
-	Noeud * enfant;
-	while ( coups[k] != NULL) {
-		enfant = ajouterEnfant(racine, coups[k]);
-		k++;
-	}
-	
+	racine = createChildren(racine);
 
-	meilleur_coup = coups[ rand()%k ]; // choix aléatoire
+	//meilleur_coup = coups[ rand()%k ]; // choix aléatoire
 	
 	int iter = 0;
 	Etat * etat_possible; 
@@ -461,12 +463,7 @@ void ordijoue_mcts(Etat * etat, int tempsmax) {
 		while(testFin(tempo->etat) == NON) {
 			if(tempo->nb_enfants != 0) tempo = tempo->enfants[0];
 			else {
-				Coup ** coupsTempo = coups_possibles(tempo->etat);
-				int i = 0;
-				while(coupsTempo[i] != NULL) {
-					ajouterEnfant(tempo, coupsTempo[i]);
-					i++;
-				}
+				tempo = createChildren(tempo);
 				tempo = tempo->enfants[0];
 			}
 		}
@@ -497,18 +494,17 @@ void ordijoue_mcts(Etat * etat, int tempsmax) {
 		temps = (int)( ((double) (toc - tic)) / CLOCKS_PER_SEC );
 		iter ++;
 
-		//printf("Temps : %d | Victoires : %d | Simulations : %d\n", temps, tempo->nb_victoires, tempo->nb_simus);
+		printf("Temps : %d | Victoires : %d | Simulations : %d\n", temps, tempo->nb_victoires, tempo->nb_simus);
+		//system("PAUSE");
 	} while ( temps < tempsmax );
-	//system("PAUSE");
-	// On choisi le meilleur fils avec l'heuristique : nbVictoires * 100 - nbSimulations
-	meilleur_coup = coups[findBestCoupID(racine)];
 
+	// On choisi le meilleur fils avec l'heuristique : nbVictoires * 100 - nbSimulations
+	meilleur_coup = racine->enfants[findBestCoupID(racine)]->coup;
 	// Jouer le meilleur premier coup
 	jouerCoup(etat, meilleur_coup );
 	
 	// Penser à libérer la mémoire :
 	freeNoeud(racine);
-	free (coups);
 }
 
 int main(void) {
