@@ -209,6 +209,15 @@ Noeud * ajouterEnfant(Noeud * parent, Coup * coup) {
 	return enfant;
 }
 
+Noeud * getLastChild(Noeud * racine) {
+	if(racine->enfants != NULL) {
+		return getLastChild(racine->enfants[0]);
+	}
+	else {
+		return racine;
+	}
+}
+
 void freeNoeud ( Noeud * noeud) {
 	if ( noeud->etat != NULL)
 		free (noeud->etat);
@@ -304,24 +313,20 @@ void ordijoue_mcts(Etat * etat, int tempsmax) {
 	
 	meilleur_coup = coups[ rand()%k ]; // choix aléatoire
 	
-	/*  TODO :
-		- supprimer la sélection aléatoire du meilleur coup ci-dessus
-		- implémenter l'algorithme MCTS-UCT pour déterminer le meilleur coup ci-dessous
-	*/
 	int iter = 0;
 	
 	do {
-		// à compléter par l'algorithme MCTS-UCT... 
-	
-	
-	
+		/*Sélection 
+		while (testFin(getLastChild(racine->enfants[0])->etat != NON)) { 
+			enfant = ajouterEnfant(getLastChild(racine->enfants[0]), coups[0]);
+		} 
+		printf("%d\n", testFin(getLastChild(racine->enfants[0])->etat));
+		*/
 	
 		toc = clock(); 
 		temps = (int)( ((double) (toc - tic)) / CLOCKS_PER_SEC );
 		iter ++;
-	} while ( temps < tempsmax );
-	
-	/* fin de l'algorithme  */ 
+	} while ( temps < tempsmax ); 
 	
 	// Jouer le meilleur premier coup
 	jouerCoup(etat, meilleur_coup );
